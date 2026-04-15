@@ -14,46 +14,45 @@ The app uses pre-computed association rules to recommend financial products (cre
 
 ## How It Works
 
+### Interactive Explorer (Tab 1)
+
 1. **Install the app** from the Marketplace listing.
 2. **Open the app** — the Streamlit UI launches automatically.
 3. **Set the customer profile** in the sidebar (age, salary, risk, employment, current product).
 4. **View recommendations** — the app matches association rules to the profile and displays the top 5 recommended products ranked by confidence and support.
 
-## Recommendation Logic
+### Batch Recommendations with Your Own Data (Tab 2)
 
-The app uses a 3-tier matching strategy:
+The app supports **consumer-provided customer data**. You can connect your own customers table and generate personalized recommendations for every customer in bulk.
 
-1. **Exact segment match** — Rules matching all 4 demographic fields + current product
-2. **Relaxed match** — Rules matching age group + salary band + current product
-3. **Global fallback** — Universal rules based on current product only
+#### Required Table Schema
 
-## Data Included
-
-This app ships with sample association rules and financial product data. No external data or table connections are required.
-
-### PRODUCT_ASSOCIATIONS Table
+Your customers table must have the following columns:
 
 | Column | Type | Description |
 |---|---|---|
-| `AGE_GROUP` | VARCHAR | Customer age segment or `GLOBAL` for fallback rules |
-| `SALARY_BAND` | VARCHAR | Income segment or `GLOBAL` |
-| `RISK_PROFILE` | VARCHAR | Risk tolerance or `GLOBAL` |
-| `EMPLOYMENT_STATUS` | VARCHAR | Employment category or `GLOBAL` |
-| `ANTECEDENT` | VARCHAR | Product(s) the customer currently holds |
-| `CONSEQUENT` | VARCHAR | Recommended product(s) |
-| `SUPPORT` | FLOAT | Rule support (0.0 to 1.0) |
-| `CONFIDENCE` | FLOAT | Rule confidence (0.0 to 1.0) |
-| `SCORE` | FLOAT | Combined score (support x confidence) |
+| `CUSTOMER_ID` | VARCHAR | Unique customer identifier |
+| `AGE` | NUMBER | Customer age (e.g. 35) |
+| `SALARY` | NUMBER | Annual salary (e.g. 75000) |
+| `RISK_PROFILE` | VARCHAR | `Low`, `Medium`, or `High` |
+| `EMPLOYMENT_STATUS` | VARCHAR | `Salaried`, `Self-Employed`, `Business`, `Retired`, or `Other` |
+| `CURRENT_PRODUCT` | VARCHAR | Current financial product (e.g. `SAVINGS ACCOUNT`, `CREDIT CARD`) |
 
-### FIN_TABLE
+#### How to Connect Your Table
 
-| Column | Type | Description |
-|---|---|---|
-| `CURRENT_PRODUCT` | VARCHAR | Existing financial product |
-| `RECOMMENDED_PRODUCT` | VARCHAR | Suggested next product |
-| `CONVERSION_PROBABILITY` | FLOAT | Likelihood of conversion (0.0 to 1.0) |
-| `OFFER_AVAILABLE` | VARCHAR | Whether an offer is currently available (`Yes` / `No`) |
+**Option A — Via Snowsight UI:**
+1. Navigate to the installed app in **Catalog > Apps**
+2. Click the **Settings** icon > **Privileges** tab
+3. Under **Object access privileges**, click **Add** next to "Customer table"
+4. Select the table containing your customer data
+5. Click **Save**
+6. Open the app and go to the **Batch Recommendations** tab
+7. Click **Generate Recommendations**
 
-## Available Products
-
-Savings Account, Credit Card, Personal Loan, Home Loan, Mutual Fund, Insurance, Fixed Deposit, Pension Plan, Retirement Plan, Stocks, Portfolio Advisory, Wealth Management, Business Loan, Commercial Loan, Senior Savings Scheme.
+**Option B — Via SQL:**
+```sql
+CALL <app_name>.config.register_single_reference(
+  'consumer_customers',
+  'ADD',
+  SYSTEM$REFERENCE('TABLE', '<your_db>.<your_schema>.<your_table>', 'PERSISTENT', 'SELECT')
+);
